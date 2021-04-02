@@ -1,11 +1,17 @@
 // SerialApplication.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
+#ifndef _WaveIOHeader_
+#include "WavIO.h"
+#endif // !1
 
+#pragma once
 #include <iostream>
 #include <windows.h>
-#include <stdio.h>
 #include "plplot/plstream.h"
+#include "FFT_1024.h"
+#include <cmath>
 using namespace std;
+
 
 
 
@@ -26,7 +32,7 @@ int main()
         printf("Error in Getting Communication State\n");
     }
 
-    dcbSerialParams.BaudRate = 1000000;
+    dcbSerialParams.BaudRate = 2000000;
     dcbSerialParams.ByteSize = 8;
     dcbSerialParams.StopBits = ONESTOPBIT;
     dcbSerialParams.Parity = NOPARITY;
@@ -34,11 +40,20 @@ int main()
         printf("Error in Setting new Communication Settings\n");
     }
 
-    const int n = 20000;
-    const int buffSize = 1000;
+    const int n = (1 << 14);
+    const int buffSize = (1 << 10);
 
     PLFLT* data = new PLFLT[n / 2];
     PLFLT* xaxis = new PLFLT[n / 2];
+
+
+    short* fftData_in = new short[n / 2];
+    short* fftTemp_in = new short[(1 << 10)];
+    PLFLT* fftData_out_real = new PLFLT[n / 2];
+    PLFLT* fftTemp_out_real = new PLFLT[(1 << 10)];
+    PLFLT* fftData_out_imag = new PLFLT[n / 2];
+    PLFLT* fftTemp_out_imag = new PLFLT[(1 << 10)];
+    PLFLT* fftData_out_abs = new PLFLT[n / 2];
 
     byte* byte_buffer = new byte[n];
 
@@ -48,12 +63,16 @@ int main()
     DWORD dwBytesRead = 0;
 
     byte lower, higher;
-    int last = 0;
+
+    vector <short> wavWrite;
+    int samplingRate = 90000, bitsPerSample = 16, audioLength = 30, numberChannels = 1;
+    int whileCount = 0, whileTill = audioLength * samplingRate / n * 2;
 
     plspage(100, 100, 2000, 700, 0, 0);
     plsdev("wingcc");
     plsetopt("np", "");
     plinit();
+    plssub(1, 2);
 
     //To Implementing Parity Protocol during startup
     byte init_buffer;
@@ -66,7 +85,7 @@ int main()
             printf("Error in setting up Parity Protocol\n");
         }
 
-    while (1) {
+    while (whileCount++ < whileTill) {
         for (int i = 0; i < n / buffSize; i++) {
             if (!ReadFile(hComm, szBuff, buffSize, &dwBytesRead, NULL)) {
                 printf("Error in Reading data\n");
@@ -76,29 +95,54 @@ int main()
             }
         }
 
-
+        short temp_data, last = 0;
         for (int i = 0; i < n && i + 1 < n; i = i + 2) {
             higher = byte_buffer[i];
             lower = byte_buffer[i + 1];
             //Parity Protocol
             if (higher % 2 == 0 && lower % 2 == 1) {
-                data[i / 2] = ((higher & 0B11111000) << 2) | ((lower & 0B11111000) >> 3);
+                temp_data = ((higher & 0B11111000) << 2) | ((lower & 0B11111000) >> 3);
                 xaxis[i / 2] = i / 2;
-                last = data[i / 2];
+                last = temp_data;
             }
             else {
-                data[i / 2] = 0;
+                temp_data = last;
                 i--;
+            }
+            wavWrite.push_back(temp_data * 32);
+            data[i / 2] = temp_data;
+        }
+
+        for (int i = 0; i < (n / 2) / (1 << 10); i++) {
+            for (int j = 0; j < (1 << 10); j++) {
+                fftTemp_in[j] = (short)data[i * (1 << 10) + j];
+            }
+
+            FFT_1024(fftTemp_in, fftTemp_out_real, fftTemp_out_imag);
+
+            for (int j = 0; j < (1 << 10); j++) {
+                fftData_out_real[i * (1 << 10) + j] = fftTemp_out_real[j];
+                fftData_out_imag[i * (1 << 10) + j] = fftTemp_out_imag[j];
+                fftData_out_abs[i * (1 << 10) + j] = sqrt(fftTemp_out_real[j] * fftTemp_out_real[j] + fftTemp_out_imag[j] * fftTemp_out_imag[j]);
             }
         }
 
-        plenv(xmin, xmax, ymin, ymax, 0, 0);
+        pladv(1);
+        plenv0(xmin, xmax, ymin, ymax, 0, 0);
         pllab("Points", "Amplitude", "Plotting Serial Data");
         plline(n / 2, xaxis, data);
-    }
 
+        pladv(2);
+        plenv0(xmin, xmax, 0, 25000, 0, 0);
+        pllab("Points", "FFT", "Plotting FFT of Serial Data");
+        plline(n / 2, xaxis, fftData_out_abs);
+    }
     plend();
     CloseHandle(hComm);
+
+    char name[] = "audio_input.wav";
+    //WaveIO(name, numberChannels, samplingRate, bitsPerSample, wavWrite);
+
     return 0;
 }
 
