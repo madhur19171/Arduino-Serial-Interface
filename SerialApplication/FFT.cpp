@@ -1,5 +1,5 @@
 //Best Solution1 32 Point:
-#include "FFT_1024.h"
+#include "FFT.h"
 #include <vector>
 using namespace std;
 
@@ -84,7 +84,10 @@ void swapArrays(data_t source[N], data_t destination[N]) {
 }
 
 //void FFT_1024(vector<short> data_in_arg, vector<float> data_out_real_arg, vector<float> data_out_imag_arg)
-void FFT_1024(short data_in_arg[N], data_t_sw data_out_real_arg[N], data_t_sw data_out_imag_arg[N]) {
+void FFT(short data_in_arg[N], data_t_sw data_out_real_arg[N], data_t_sw data_out_imag_arg[N]) {
+
+	if(!weights_filled)
+		fillWeights();
 
 	data_t* real_w = real_data, * imag_w = imag_data;
 	//populate_ROM(real_w, imag_w);
@@ -105,7 +108,7 @@ void FFT_1024(short data_in_arg[N], data_t_sw data_out_real_arg[N], data_t_sw da
 
 	FFT_bit_reversal(data_in_real, data_in_imag, out_stage_1_real, out_stage_1_imag);
 
-	for (int i = 1; i <= 10; i++) {
+	for (int i = 1; i <= rep_bits; i++) {
 		FFT_stage(i, out_stage_1_real, out_stage_1_imag, out_stage_2_real, out_stage_2_imag, real_w, imag_w);
 		swapArrays(out_stage_2_imag, out_stage_1_imag);
 		swapArrays(out_stage_2_real, out_stage_1_real);

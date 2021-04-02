@@ -24,7 +24,7 @@
     <ClCompile Include="WavIO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FFT_1024.cpp">
+    <ClCompile Include="FFT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,7 +35,7 @@
     <ClInclude Include="WavIO.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FFT_1024.h">
+    <ClInclude Include="FFT.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="FFT_values.h">

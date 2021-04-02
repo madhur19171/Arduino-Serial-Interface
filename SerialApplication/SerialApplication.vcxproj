@@ -140,7 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="FFT_1024.cpp" />
+    <ClCompile Include="FFT.cpp" />
     <ClCompile Include="SerialApplication.cpp" />
     <ClCompile Include="WavIO.cpp" />
   </ItemGroup>
@@ -148,7 +148,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="FFT_1024.h" />
+    <ClInclude Include="FFT.h" />
     <ClInclude Include="FFT_values.h" />
     <ClInclude Include="WavIO.h" />
   </ItemGroup>

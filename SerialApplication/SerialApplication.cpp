@@ -8,7 +8,7 @@
 #include <iostream>
 #include <windows.h>
 #include "plplot/plstream.h"
-#include "FFT_1024.h"
+#include "FFT.h"
 #include <cmath>
 using namespace std;
 
@@ -48,11 +48,11 @@ int main()
 
 
     short* fftData_in = new short[n / 2];
-    short* fftTemp_in = new short[(1 << 10)];
+    short* fftTemp_in = new short[(1 << rep_bits)];
     PLFLT* fftData_out_real = new PLFLT[n / 2];
-    PLFLT* fftTemp_out_real = new PLFLT[(1 << 10)];
+    PLFLT* fftTemp_out_real = new PLFLT[(1 << rep_bits)];
     PLFLT* fftData_out_imag = new PLFLT[n / 2];
-    PLFLT* fftTemp_out_imag = new PLFLT[(1 << 10)];
+    PLFLT* fftTemp_out_imag = new PLFLT[(1 << rep_bits)];
     PLFLT* fftData_out_abs = new PLFLT[n / 2];
 
     byte* byte_buffer = new byte[n];
@@ -65,7 +65,7 @@ int main()
     byte lower, higher;
 
     vector <short> wavWrite;
-    int samplingRate = 90000, bitsPerSample = 16, audioLength = 30, numberChannels = 1;
+    int samplingRate = 90000, bitsPerSample = 16, audioLength = 60, numberChannels = 1;
     int whileCount = 0, whileTill = audioLength * samplingRate / n * 2;
 
     plspage(100, 100, 2000, 700, 0, 0);
@@ -113,17 +113,17 @@ int main()
             data[i / 2] = temp_data;
         }
 
-        for (int i = 0; i < (n / 2) / (1 << 10); i++) {
-            for (int j = 0; j < (1 << 10); j++) {
-                fftTemp_in[j] = (short)data[i * (1 << 10) + j];
+        for (int i = 0; i < (n / 2) / (1 << rep_bits); i++) {
+            for (int j = 0; j < (1 << rep_bits); j++) {
+                fftTemp_in[j] = (short)data[i * (1 << rep_bits) + j];
             }
 
-            FFT_1024(fftTemp_in, fftTemp_out_real, fftTemp_out_imag);
+            FFT(fftTemp_in, fftTemp_out_real, fftTemp_out_imag);
 
-            for (int j = 0; j < (1 << 10); j++) {
-                fftData_out_real[i * (1 << 10) + j] = fftTemp_out_real[j];
-                fftData_out_imag[i * (1 << 10) + j] = fftTemp_out_imag[j];
-                fftData_out_abs[i * (1 << 10) + j] = sqrt(fftTemp_out_real[j] * fftTemp_out_real[j] + fftTemp_out_imag[j] * fftTemp_out_imag[j]);
+            for (int j = 0; j < (1 << rep_bits); j++) {
+                fftData_out_real[i * (1 << rep_bits) + j] = fftTemp_out_real[j];
+                fftData_out_imag[i * (1 << rep_bits) + j] = fftTemp_out_imag[j];
+                fftData_out_abs[i * (1 << rep_bits) + j] = sqrt(fftTemp_out_real[j] * fftTemp_out_real[j] + fftTemp_out_imag[j] * fftTemp_out_imag[j]);
             }
         }
 
